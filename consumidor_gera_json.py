@@ -4,6 +4,8 @@ import msr.utils as util
 from tqdm import tqdm
 import time
 from msr.dao import Repository, Repositories
+import os
+import json
 
 # Collection to manipulate repositories in data base
 repositoriesCollection = Repositories()
@@ -20,10 +22,30 @@ def atualizar_status_no_banco(user, repositorio, status):
     nome_repositorio = util.pega_nome_repositorio(repositorio)
     repositoriesCollection.update_repository_by_name(nome_repositorio, user, 2)
 
-def gerar_arquivos_json(user, repositorio):
+def user_directory(path_repositories, user_id):
+    user_path = path_repositories + '/' + str(user_id)
+    if os.path.exists(user_path):
+        return user_path
+    else: 
+        os.makedirs(user_path)
+        return user_path  
+
+def save_dictionary_in_json_file(name, user_id, my_dictionary, path_repositories): 
+    try: 
+        singleName = name + ".json"
+        #Create the user directory if not existe
+        temp_path = user_directory(path_repositories, user_id)
+        fileName =  temp_path + '/' + singleName
+        with open(fileName, 'w', encoding="utf-8") as jsonFile:
+            json.dump(my_dictionary, jsonFile)
+        print(f'The file {singleName} was saved with success!')
+    except Exception as e:
+        print(f'Error when try to save the json file: {e}')
+
+def gerar_arquivos_json(user, repositorio, nome_repositorio, my_json):
     try:
-        for i in tqdm(range(3)):
-            time.sleep(1)
+        my_dictionary = json.loads(my_json)
+        save_dictionary_in_json_file(nome_repositorio, user, my_dictionary, util.Constants.PATH_REPOSITORIES)
         print(f'Arquivo JSON Repositório {repositorio} gerado com sucesso na área do usuário: {user}!')
         status = 'Analisado'
         atualizar_status_no_banco(user, repositorio, status)
@@ -34,8 +56,8 @@ def generate_file_callback(ch, method, properties, body):
     body = body.decode('utf-8')
     if 'user' in body:
         try:
-            user, repositorio, nome_repositorio, status = util.parser_body(body)
-            gerar_arquivos_json(user, repositorio)
+            user, repositorio, nome_repositorio, status, my_json = util.parser_body_com_json(body)
+            gerar_arquivos_json(user, repositorio, nome_repositorio, my_json)
         except Exception as ex:
             print(f'Erro: {str(ex)}')     
  

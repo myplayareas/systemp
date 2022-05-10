@@ -10,10 +10,27 @@ def parser_body(body):
     nome_repositorio = nome_repositorio_temp.split('/')[-1]
     return user, repositorio, nome_repositorio, status
 
+def parser_body_com_json(body):
+    str_temp = body.split('#')
+    user = str_temp[0].split('=')[1]
+    repositorio = str_temp[1].split('=')[1] 
+    status = str_temp[2].split('=')[1] 
+    my_json = str_temp[3].split('=')[1]     
+    separa_ponto = repositorio.split('.')
+    nome_repositorio_temp = separa_ponto[1]
+    nome_repositorio = nome_repositorio_temp.split('/')[-1]
+    return user, repositorio, nome_repositorio, status, my_json
+
 def enfilera_pedido_msg(canal, fila, usuario, repositorio, status, tipo):
     print(f'Conectando ao canal {canal} na fila {fila}')
     print(f'Enviando o pedido de {tipo} do repositório {repositorio} do usuário {usuario}')
     conteudo = 'user=' + usuario + ',' + 'repository=' + repositorio + ',' + 'status='+status
+    canal.basic_publish(exchange='', routing_key=fila, body=conteudo)
+
+def enfilera_pedido_msg_com_json(canal, fila, usuario, repositorio, status, tipo, resultado):
+    print(f'Conectando ao canal {canal} na fila {fila}')
+    print(f'Enviando o pedido de {tipo} do repositório {repositorio} do usuário {usuario}')
+    conteudo = 'user=' + usuario + '#' + 'repository=' + repositorio + '#' + 'status=' + status + '#' + 'resultado=' + resultado
     canal.basic_publish(exchange='', routing_key=fila, body=conteudo)
 
 def pega_nome_repositorio(url):
