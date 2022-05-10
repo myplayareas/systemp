@@ -8,6 +8,7 @@ from functools import wraps
 from werkzeug.exceptions import HTTPException, InternalServerError
 from flask import current_app, request, abort
 from msr import utils
+from msr import produtor_clona_repositorio
 
 # Lista da strings de repositorios
 lista_de_repositorios = list()
@@ -115,10 +116,11 @@ def repository_page():
         if not exist_repository_in_user(name, link, list_user_repositories):
             repository = Repository(name=name, link=link, creation_date=datetime.datetime.now(), 
                                             analysis_date=None, analysed=0, owner=current_user.get_id())
-            print(f'Roda metodo que salva as informacoes do {repository.name} no banco de dados')
-            flash(f'Repository {repository.name} created with success!', category='success')
+            repositoriesCollection.insert_repository(repository)
+            produtor_clona_repositorio.msg_clona_repositorio(fila=produtor_clona_repositorio.my_fila, usuario=current_user.get_id(), 
+                                                            repositorio=link, status='Registrado')
+            flash(f'Repository {repository.name} saved with success!', category='success')
             return redirect(url_for('msr_page'))
-
         flash('Repository already exist!', category='danger')
 
     if form.errors != {}: #If there are not errors from the validations
@@ -126,12 +128,3 @@ def repository_page():
             flash(f'There was an error with new repository: {err_msg}', category='danger')
 
     return render_template('repository/repository.html', form=form)  
-
-def pega_nome_repositorio(url):
-    temp = url.split('/')
-    nome_com_extensao = ''
-    for each in temp:
-        if '.git' in each:
-          nome_com_extensao = each
-    lista = nome_com_extensao.split('.')
-    return lista[0]
