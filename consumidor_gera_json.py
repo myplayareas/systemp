@@ -12,7 +12,7 @@ repositoriesCollection = Repositories()
  
 rabbitmq_broker_host = 'localhost'
 my_fila1 = 'fila_operacoes_arquivos_local'
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host, heartbeat=0))
 
 channel_to_generate_file = connection.channel()
 channel_to_generate_file.queue_declare(queue=my_fila1, durable=True)

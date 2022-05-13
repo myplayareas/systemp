@@ -12,7 +12,7 @@ repositoriesCollection = Repositories()
 rabbitmq_broker_host = 'localhost'
 my_fila1 = 'fila_status_banco'
 my_fila2 = 'fila_analise_commits'
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host, heartbeat=0))
 
 channel_to_update_db = connection.channel() 
 channel_to_update_db.queue_declare(queue=my_fila1, durable=True)

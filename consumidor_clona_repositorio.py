@@ -11,7 +11,7 @@ rabbitmq_broker_host = 'localhost'
 my_fila1 = 'fila_repositorio_local'
 my_fila2 = 'fila_status_banco'
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host, heartbeat=0))
 
 channel_to_clone = connection.channel()
 channel_to_clone.queue_declare(queue=my_fila1, durable=True)

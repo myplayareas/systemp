@@ -12,7 +12,7 @@ import json
 rabbitmq_broker_host = 'localhost'
 my_fila1 = 'fila_analise_commits'
 my_fila2 = 'fila_operacoes_arquivos_local'
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host, heartbeat=0))
 
 channel_to_analysis = connection.channel() 
 channel_to_analysis.queue_declare(queue=my_fila1, durable=True)

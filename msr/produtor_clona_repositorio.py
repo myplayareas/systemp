@@ -4,7 +4,7 @@ import msr.utils as util
 
 rabbitmq_host = 'localhost'
 my_fila = 'fila_repositorio_local'
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, heartbeat=0))
 
 channel_to_clone = connection.channel() 
 channel_to_clone.queue_declare(queue=my_fila, durable=True)
