@@ -88,7 +88,7 @@ Run the application via CLI:
 $flask run
 ```
 
-### Executando os produtores e consumidores
+### 3.1 Executando os produtores e consumidores
 
 produtor da fila_repositorio_local - atualiza no banco e solicita clonagem - (produtor)
 ```
@@ -118,3 +118,6 @@ $ python3 consumidor_analisa_commits.py
 # Shell 5
 $ python3 consumidor_gera_json.py 
 ```
+### 3.2 Chamando a aplicação web
+
+http://localhost:5000
