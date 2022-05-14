@@ -1,7 +1,23 @@
 # systemp
-Systemp
+Systemp...
 
-### Installing requiremnts 
+Server1 - Application Server (Flask Web App)
+
+Server2 - Message broker (RabbitMQ)
+
+## 1. Installing requirement (Server1)
+
+No Server1, prepare o ambiente virtual para logo depois rodar a aplicação flask principal. 
+
+Clone o repositorio
+```bash
+$git clone https://github.com/myplayareas/systemp.git
+```
+
+Vá para o diretório systemp
+```bash
+$cd systemp
+```
 
 Virtual environment
 ```bash
@@ -18,37 +34,23 @@ Install requirements
 pip3 install -r requirements.txt
 ```
 
-### Run application
-
-To run the application, it is necessary to install all the modules and extensions mentioned above. In addition, you need to set the following environment variables:
-
-For the Posix environment:
-```bash
-export FLASK_APP=run.py
-export FLASK_ENV=development
-```
-More details at [CLI Flask](https://flask.palletsprojects.com/en/2.0.x/cli/)
-
-Run the application via CLI:
-```bash
-$flask run
-```
-
-### repositoryanalysis
-Repository Analysis - Permite a análise assíncrona de vários repositórios git de forma "simultânea"
+## 2. repositoryanalysis (Server2)
+Repository Analysis - Permite a análise assíncrona de vários repositórios git na forma enfeiramento de pedidos.
 
 Dado um repositório git o mesmo é salvo em banco e logo depois é clonado para permitir uma análise local. Ao final da análise do repositório gera um arquivo JSON com os resultados da análise.
 
+Para o nosso exemplo, o Server2 será um container docker hospedado no Server1. Com isso, garanta que tenha o docker instalado e executando no Server1. 
+
 ### Para rodar o RabbitMQ com o docker, basta rodar a seguinte linha de comando:
+
+No Server1 execute o seguinte comando: 
 ```
 $ docker run --rm -p 5672:5672 -p 8080:15672 rabbitmq:3-management
 ```
 
-O servidor de mensageria do RabbitMQ deverá rodar em http://localhost:8080
+No Server1, você pode acessar a web app do RabbitMQ via http://localhost:8080
 
-Entre com o usuário guest/guest
-
-Crie as seguintes filas: 
+Quando a aplicação do Server1 for executada, serão criadas as seguintes filas: 
 
 fila_repositorio_local - Fila que organiza as solicitações para clonar os repositórios
 
@@ -58,9 +60,32 @@ fila_operacoes_arquivo_local - Fila que organiza a geração de arquivos JSON co
 
 fila_status_banco - Fila que organiza as solicitações de atualização de status de cada repositório no banco
 
-### Para visualizar as mensagens de uma fila no RabbitMQ:
+Entre com o usuário guest/guest para visualizar as operações do message broker em tempo real. 
+
+### Para visualizar as mensagens de uma fila no RabbitMQ (Server2):
+
+Acesse o container docker que está executando o Server2
+
 ```
 $ rabbitmqadmin get queue=fila_operacoes_arquivos_local count=10
+```
+
+## 3. Run application (Server1)
+
+To run the application, it is necessary to install all the modules and extensions mentioned above. In addition, you need to set the following environment variables:
+
+For the Posix environment:
+```bash
+# Shell 1
+export FLASK_APP=run.py
+export FLASK_ENV=development
+```
+More details at [CLI Flask](https://flask.palletsprojects.com/en/2.0.x/cli/)
+
+Run the application via CLI:
+```bash
+# Shell 1
+$flask run
 ```
 
 ### Executando os produtores e consumidores
@@ -70,25 +95,25 @@ produtor da fila_repositorio_local - atualiza no banco e solicita clonagem - (pr
 running in main.py
 ```
 
-Consumidor da fila_repositorio_local e produtor da fila_status_banco - faz a clonagem e solicita atualização do BD - (consumidor e produtor)
+(Server1) - Consumidor da fila_repositorio_local e produtor da fila_status_banco - faz a clonagem e solicita atualização do BD - (consumidor e produtor)
 ```
 # Shell 2
 $ python3 consumidor_clona_repositorio.py
 ```
 
-Consumidor da fila_status_banco e produtor da fila_analise_commits - atualiza o BD e solicita análise do repositório - (consumidor e produtor)
+(Server1) - Consumidor da fila_status_banco e produtor da fila_analise_commits - atualiza o BD e solicita análise do repositório - (consumidor e produtor)
 ```
 # Shell 3
 $ python3 consumidor_atualiza_status_banco.py
 ```
 
-Consumidor da fila_analise_commits e produtor da fila_operacoes_arquivos_local - analisa os commits do repositório e solicita gerar JSON - (consumidor e produtor)
+(Server1) - Consumidor da fila_analise_commits e produtor da fila_operacoes_arquivos_local - analisa os commits do repositório e solicita gerar JSON - (consumidor e produtor)
 ```
 # Shell 4
 $ python3 consumidor_analisa_commits.py
 ```
 
-Consumidor da fila_arquivos_local - Gera o arquivo JSON com os resultados da análise do repositório.
+(Server1) - Consumidor da fila_arquivos_local - Gera o arquivo JSON com os resultados da análise do repositório.
 ```
 # Shell 5
 $ python3 consumidor_gera_json.py 
