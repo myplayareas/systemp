@@ -5,6 +5,14 @@
 import pika
 import msr.utils as util
 from msr.dao import Repository, Repositories
+import logging
+
+# Remove all handlers associated with the root logger object.
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+                    datefmt='%d/%m/%Y %H:%M:%S', filename='logs/my_app_consumidor_atualiza_status_banco.log', filemode='w')
 
 # Collection to manipulate repositories in data base
 repositoriesCollection = Repositories()
@@ -21,9 +29,18 @@ channel_to_analysis = connection.channel()
 channel_to_analysis.queue_declare(queue=my_fila2, durable=True)
 
 def atualizar_status_no_banco(user, repositorio, status):
-    print(f'Atualiza o status {status} do {repositorio} no banco na area do usuario: {user}')
-    nome_repositorio = util.pega_nome_repositorio(repositorio)
-    repositoriesCollection.update_repository_by_name(nome_repositorio, user, 1)
+    msg1 = f'Atualiza o status {status} do {repositorio} no banco na area do usuario: {user}' 
+    msg2 = f'Status {status} do repositorio {repositorio} atualizdo com sucesso!'
+    try:
+        print(msg1)
+        logging.info(msg1)
+        nome_repositorio = util.pega_nome_repositorio(repositorio)
+        repositoriesCollection.update_repository_by_name(nome_repositorio, user, 1)
+        print(msg2)
+        logging.info(msg2)
+    except Exception as e:
+        print(f'Erro: {str(e)}')
+        logging.error("Exception occurred", exc_info=True)
 
 def update_db_callback(ch, method, properties, body):
     body = body.decode('utf-8')
@@ -31,7 +48,6 @@ def update_db_callback(ch, method, properties, body):
         try:
             user, repositorio, nome_repositorio, status = util.parser_body(body)
             atualizar_status_no_banco(user, repositorio, status)
-            print(f'Repositório do {nome_repositorio} atualizado no banco com status {status} com sucesso!')
             # 4.2. Enfilera pedido de análise de commits do repositório (14) (produtor)
             msg_analysis_db_repositorio(canal=channel_to_update_db, fila=my_fila2, usuario=user, repositorio=repositorio, status='Em analise')
         except Exception as ex:

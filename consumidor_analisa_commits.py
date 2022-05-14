@@ -8,6 +8,15 @@ from tqdm import tqdm
 import time
 from pydriller import Repository
 import json
+
+import logging
+
+# Remove all handlers associated with the root logger object.
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
+                    datefmt='%d/%m/%Y %H:%M:%S', filename='logs/my_app_consumidor_analisa_commits.log', filemode='w')
  
 rabbitmq_broker_host = 'localhost'
 my_fila1 = 'fila_analise_commits'
@@ -34,13 +43,18 @@ def dictionaryWithAllCommmits(client, repository):
                 itemMofied = '{}'.format(modification.filename)
                 listFilesModifiedInCommit.append(itemMofied)
             dictionaryAux[commit.hash] = [commitAuthorNameFormatted, commitAuthorDateFormatted, listFilesModifiedInCommit] 
+        logging.info(f'Dicionário gerado com sucesso')
+        logging.info(dictionaryAux)
     except Exception as e:
         print(f'Error during processing dictionaryWithAllCommmits in {repository} error: {e}')
+        logging.error("Exception occurred", exc_info=True)
         dictionaryAux = None
     return dictionaryAux
 
 def analisar_repositorio(user, repositorio, nome_repositorio):
-    print(f'Analisando o {repositorio}, na area do usuario: {user} ...')
+    msg1 = f'Analisando o {repositorio}, na area do usuario: {user} ...' 
+    print(msg1)
+    logging.info(msg1)
     path_repositorio = util.Constants.PATH_REPOSITORIES + '/' + user + '/' + nome_repositorio
     return dictionaryWithAllCommmits(user, path_repositorio)
 
@@ -51,8 +65,9 @@ def analise_callback(ch, method, properties, body):
             user, repositorio, nome_repositorio, status = util.parser_body(body)
             resultado_analise = analisar_repositorio(user, repositorio, nome_repositorio)  
             resultado_analise = json.dumps(resultado_analise)        
-            print(resultado_analise)
-            print(f'Análise do repositório {repositorio} concluida!')
+            msg1 = f'Análise do repositório {repositorio} concluida!' 
+            print(msg1)
+            logging.info(msg1)
             # 5.8. Enfilera pedido de gerar arquivo JSON do repositório (20) (produtor)
             msg_generate_file_repositorio(canal=channel_to_generate_file, fila=my_fila2, usuario=user, repositorio=repositorio, status=status, resultado=resultado_analise)
         except Exception as ex:

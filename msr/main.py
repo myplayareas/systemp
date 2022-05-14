@@ -9,6 +9,9 @@ from werkzeug.exceptions import HTTPException, InternalServerError
 from flask import current_app, request, abort
 from msr import utils
 from msr import produtor_clona_repositorio
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d/%m/%Y %H:%M:%S', filename='./logs/my_app_main.log', filemode='w')
 
 # Lista da strings de repositorios
 lista_de_repositorios = list()
@@ -117,6 +120,7 @@ def repository_page():
             repository = Repository(name=name, link=link, creation_date=datetime.datetime.now(), 
                                             analysis_date=None, analysed=0, owner=current_user.get_id())
             repositoriesCollection.insert_repository(repository)
+            logging.info(f"User: {current_user.get_id()}, Repository {repository} saved successfully on DB!")
             produtor_clona_repositorio.msg_clona_repositorio(fila=produtor_clona_repositorio.my_fila, usuario=current_user.get_id(), 
                                                             repositorio=link, status='Registrado')
             flash(f'Repository {repository.name} saved with success!', category='success')
