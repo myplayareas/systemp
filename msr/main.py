@@ -114,7 +114,8 @@ def repository_page():
     if form.validate_on_submit():
         name = form.name.data
         link = form.link.data
-
+        # Todo melhorar o tratamento do nome do repositorio
+        name = utils.pega_nome_repositorio(link)
         list_user_repositories = repositoriesCollection.query_repositories_by_user_id(current_user.get_id())
         if not exist_repository_in_user(name, link, list_user_repositories):
             repository = Repository(name=name, link=link, creation_date=datetime.datetime.now(), 
