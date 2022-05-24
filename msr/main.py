@@ -133,3 +133,25 @@ def repository_page():
             flash(f'There was an error with new repository: {err_msg}', category='danger')
 
     return render_template('repository/repository.html', form=form)  
+
+@app.route('/msr')
+@login_required
+def msr_page():
+    repositories = Repository.query.filter_by(owner=current_user.get_id()).all()
+    return render_template('user/msr.html', repositories=repositories)
+
+@app.route("/repository/<int:id>/treemap", methods=["GET"])
+@login_required
+def visualizar_treemap_repositorio(id):
+    repositorio = repositoriesCollection.query_repository_by_id(id)
+    link = repositorio.link
+    name = repositorio.name
+    creation_date = repositorio.creation_date
+    analysis_date = repositorio.analysis_date
+    status = repositorio.analysed
+
+    relative_path = 'repositories' + '/' + str(current_user.get_id()) + '/' + name + '.json'
+    relative_path_file_name = url_for('static', filename=relative_path)
+    return render_template("repository/treemapcc.html", my_link=link, my_name=name, my_creation_date=creation_date,
+                                my_analysis_date=analysis_date, my_status=status,
+                                my_relative_path_file_name=relative_path_file_name)

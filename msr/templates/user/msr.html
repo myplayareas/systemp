@@ -13,7 +13,9 @@
                 <th scope="col">Link</th>
                 <th scope="col">Created</th>
                 <th scope="col">Analysed</th>
-                <th scope="col">Analysis</th>
+                <th scope="col">Status</th>
+                <th scope="col">Commits</th>
+                <th scope="col">Treemap</th>
                 <th scope="col">Options</th>
             </tr>
         </thead>
@@ -38,6 +40,17 @@
                     {% else %}
                     <td>Not Available Yet</td>
                     {% endif %}
+                    {% if repository.analysed == 2: %}
+                    <td>
+                      <a href="{{ url_for('visualizar_treemap_repositorio', id=repository.id) }}">CC</a> | 
+                      <a href="{{ url_for('visualizar_treemap_repositorio', id=repository.id) }}">FC</a> |
+                      <a href="{{ url_for('visualizar_treemap_repositorio', id=repository.id) }}">MLOC</a> |
+                      <a href="{{ url_for('visualizar_treemap_repositorio', id=repository.id) }}">Composition</a>
+                    </td>
+                    {% else %}
+                    <td>Not Available Yet</td>
+                    {% endif %}
+                    <td>Edit | Delete</td>
                 </tr>
             {% endfor %}
         </tbody>
