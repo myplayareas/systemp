@@ -60,6 +60,10 @@ fila_operacoes_arquivo_local - Fila que organiza a geração de arquivos JSON co
 
 fila_status_banco - Fila que organiza as solicitações de atualização de status de cada repositório no banco
 
+fila_analisador - Fila que organiza as solicitações de análises da treemap
+
+fila_geracao_json - Fila que organiza as solicitações de geração de JSON (treemap/heatmap) de acordo com as métricas passadas
+
 Entre com o usuário guest/guest para visualizar as operações do message broker em tempo real. 
 
 ### Para visualizar as mensagens de uma fila no RabbitMQ (Server2):
@@ -84,7 +88,7 @@ More details at [CLI Flask](https://flask.palletsprojects.com/en/2.0.x/cli/)
 Run the application via CLI:
 ```bash
 # Shell 1
-$flask run
+flask run
 ```
 
 ### 3.1 Executando os produtores e consumidores
@@ -116,6 +120,17 @@ python3 consumidor_analisa_commits.py
 ```
 # Shell 5
 python3 consumidor_gera_json.py 
+```
+
+(Server1) - O "agente" (consumidor/produtor) [analisador de repositório para treemap] analisa (consome da fila_analisador ) o repositório e depois dispara (produz msg para fila_geracao_json ) um pedido para gerar o arquivo json correspondente.
+```
+# Shell 6
+python3 consumidor_treemap_analisador.py 
+```
+(Server1) - O "agente" (consumidor) [gerador de JSON para treemap] recebe (consome da fila_geracao_json ) o pedido e gera o JSON correspondente na pasta do usuário.
+```
+# Shell 7
+python3 consumidor_treemap_gera_json.py
 ```
 ### 3.2 Chamando a aplicação web
 
