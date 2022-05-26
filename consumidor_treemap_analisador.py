@@ -187,12 +187,22 @@ def create_json(root):
 
 def analisar_repositorio(user, repositorio, nome_repositorio, status):
     path_repositorio = util.Constants.PATH_REPOSITORIES + '/' + user + '/' + nome_repositorio
-    functions = [get_files_frequency_in_commits, get_files_cyclomatic_complexity_in_commits, get_number_of_lines_of_code_changes_in_commits, get_composition]
-    for metric in HeatmapMetric:
-        dict_of_heatmap_metric = functions[metric.value](path_repositorio)
-        root = create_tree(nome_repositorio,  get_list_of_files_and_directories(path_repositorio, nome_repositorio), get_list_of_files_loc(nome_repositorio), dict_of_heatmap_metric)
-        json = create_json(root)
-        msg_generate_file_repositorio(canal=channel_to_generate_json, fila=my_fila2, usuario=user, repositorio=repositorio, status=status, metrica=str.lower(metric.name), resultado=json)
+    # Frequency
+    dict_of_heatmap_metric_frequency =  get_files_frequency_in_commits(path_repositorio)
+    root_frequency = create_tree(nome_repositorio,  get_list_of_files_and_directories(path_repositorio, nome_repositorio), get_list_of_files_loc(nome_repositorio), dict_of_heatmap_metric_frequency)
+    json_frequency = create_json(root_frequency)
+    # CC
+    dict_of_heatmap_metric_cc =  get_files_cyclomatic_complexity_in_commits(path_repositorio)
+    root_cc = create_tree(nome_repositorio,  get_list_of_files_and_directories(path_repositorio, nome_repositorio), get_list_of_files_loc(nome_repositorio), dict_of_heatmap_metric_cc)
+    json_cc = create_json(root_cc)
+    # MLOC
+    dict_of_heatmap_metric_mloc =  get_number_of_lines_of_code_changes_in_commits(path_repositorio)
+    root_mloc = create_tree(nome_repositorio,  get_list_of_files_and_directories(path_repositorio, nome_repositorio), get_list_of_files_loc(nome_repositorio), dict_of_heatmap_metric_mloc)
+    json_mloc = create_json(root_mloc)
+
+    msg_generate_file_repositorio(canal=channel_to_generate_json, fila=my_fila2, usuario=user, repositorio=repositorio, status=status, metrica='FREQUENCY', resultado=json_frequency)
+    msg_generate_file_repositorio(canal=channel_to_generate_json, fila=my_fila2, usuario=user, repositorio=repositorio, status=status, metrica='COMPLEXITY', resultado=json_cc)
+    msg_generate_file_repositorio(canal=channel_to_generate_json, fila=my_fila2, usuario=user, repositorio=repositorio, status=status, metrica='LOC_CHANGES', resultado=json_mloc)
 
 def analise_callback(ch, method, properties, body): 
     body = body.decode('utf-8')
@@ -204,13 +214,13 @@ def analise_callback(ch, method, properties, body):
             print(msg1)
             logging.info(msg1)
         except Exception as ex:
-            print(f'Erro: {str(ex)}')     
+            print(f'Erro analise_callback: {str(ex)}')     
 
-def msg_generate_file_repositorio(canal=channel_to_generate_json, fila=my_fila2, usuario='', repositorio='', status='', resultado=''):
+def msg_generate_file_repositorio(canal=channel_to_generate_json, fila=my_fila2, usuario='', repositorio='', status='', metrica='', resultado=''):
     tipo = 'gerar arquivo JSON'
-    util.enfilera_pedido_msg_com_json(canal, fila, usuario, repositorio, status, tipo, resultado)
+    util.enfilera_pedido_msg_com_json_metrica(canal, fila, usuario, repositorio, status, tipo, metrica, resultado)
 
 channel_to_analysis.basic_consume(my_fila1, analise_callback, auto_ack=True)
 
-print(' [*] Waiting for messages to analysis queue. To exit press CTRL+C') 
+print(' [*] Waiting for messages to analysis queue to Treemap. To exit press CTRL+C') 
 channel_to_analysis.start_consuming()
