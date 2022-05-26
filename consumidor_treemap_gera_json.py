@@ -77,13 +77,13 @@ def generate_file_callback(ch, method, properties, body):
     body = body.decode('utf-8')
     if 'user' in body:
         try:
-            user, repositorio, nome_repositorio, status, metrica, my_json = util.parser_body_com_json(body)
+            user, repositorio, nome_repositorio, status, metrica, my_json = util.parser_body_com_json_metrica(body)
             gerar_arquivos_json(user, repositorio, nome_repositorio, metrica, my_json)
         except Exception as ex:
-            print(f'Erro: {str(ex)}')     
+            print(f'Erro generate_file_callback: {str(ex)}')     
             logging.error("Exception occurred", exc_info=True)
  
 channel_to_generate_json.basic_consume(my_fila1, generate_file_callback, auto_ack=True)
  
-print(' [*] Waiting for messages to generate JSON file from repository. To exit press CTRL+C')
+print(' [*] Waiting for messages to generate Treemap JSON file from repository. To exit press CTRL+C')
 channel_to_generate_json.start_consuming()
