@@ -20,10 +20,15 @@ repositoriesCollection = Repositories()
  
 rabbitmq_broker_host = 'localhost'
 my_fila1 = 'fila_operacoes_arquivos_local'
+my_fila2 = 'fila_analisador'
+
 connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host, heartbeat=0))
 
 channel_to_generate_file = connection.channel()
 channel_to_generate_file.queue_declare(queue=my_fila1, durable=True)
+
+channel_to_analysis = connection.channel()
+channel_to_analysis.queue_declare(queue=my_fila2, durable=True)
 
 def atualizar_status_no_banco(user, repositorio, status):
     msg1 = f'Atualiza o status {status} do {repositorio} no banco na area do usuario: {user}' 
@@ -81,9 +86,16 @@ def generate_file_callback(ch, method, properties, body):
         try:
             user, repositorio, nome_repositorio, status, my_json = util.parser_body_com_json(body)
             gerar_arquivos_json(user, repositorio, nome_repositorio, my_json)
+            # 4.2. Enfilera pedido de análise de commits do repositório (14) (produtor)
+            msg_analysis_treemap_repositorio(canal=channel_to_analysis, fila=my_fila2, usuario=user, repositorio=repositorio, status='Em analise')
         except Exception as ex:
             print(f'Erro: {str(ex)}')     
             logging.error("Exception occurred", exc_info=True)
+
+# 4.1. Dispara uma solicitação para analisar os commits do repositório (13)
+def msg_analysis_treemap_repositorio(canal=channel_to_analysis, fila=my_fila2, usuario='', repositorio='', status=''):
+    tipo = 'analysis'
+    util.enfilera_pedido_msg(canal, fila, usuario, repositorio, status, tipo)
  
 channel_to_generate_file.basic_consume(my_fila1, generate_file_callback, auto_ack=True)
  
