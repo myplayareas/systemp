@@ -8,7 +8,6 @@ from tqdm import tqdm
 import time
 from pydriller import Repository
 import json
-
 import logging
 
 # Remove all handlers associated with the root logger object.
