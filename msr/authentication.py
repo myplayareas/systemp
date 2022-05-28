@@ -18,12 +18,6 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 def home_page():
     return render_template('authenticate/home.html')
 
-@app.route('/msr')
-@login_required
-def msr_page():
-    repositories = Repository.query.filter_by(owner=current_user.get_id()).all()
-    return render_template('user/msr.html', repositories=repositories)
-
 @app.route('/register', methods=['GET', 'POST'])
 def register_page():
     form = RegisterForm()

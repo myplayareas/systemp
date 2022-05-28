@@ -20,6 +20,7 @@ repositoriesCollection = Repositories()
 rabbitmq_broker_host = 'localhost'
 my_fila1 = 'fila_status_banco'
 my_fila2 = 'fila_analise_commits'
+my_fila3 = 'fila_analise_metricas'
 connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host, heartbeat=0))
 
 channel_to_update_db = connection.channel() 
@@ -27,6 +28,9 @@ channel_to_update_db.queue_declare(queue=my_fila1, durable=True)
 
 channel_to_analysis = connection.channel()
 channel_to_analysis.queue_declare(queue=my_fila2, durable=True)
+
+channel_to_analysis_metrics = connection.channel()
+channel_to_analysis_metrics.queue_declare(queue=my_fila3, durable=True)
 
 def atualizar_status_no_banco(user, repositorio, status):
     msg1 = f'Atualiza o status {status} do {repositorio} no banco na area do usuario: {user}' 
@@ -50,12 +54,18 @@ def update_db_callback(ch, method, properties, body):
             atualizar_status_no_banco(user, repositorio, status)
             # 4.2. Enfilera pedido de análise de commits do repositório (14) (produtor)
             msg_analysis_db_repositorio(canal=channel_to_update_db, fila=my_fila2, usuario=user, repositorio=repositorio, status='Em analise')
+            msg_analysis_metrics_repositorio(canal=channel_to_analysis_metrics, fila=my_fila3, usuario=user, repositorio=repositorio, status='Analisando Métricas')
         except Exception as ex:
             print(f'Erro: {str(ex)}')     
 
 # 4.1. Dispara uma solicitação para analisar os commits do repositório (13)
 def msg_analysis_db_repositorio(canal=channel_to_update_db, fila=my_fila2, usuario='', repositorio='', status=''):
     tipo = 'analysis'
+    util.enfilera_pedido_msg(canal, fila, usuario, repositorio, status, tipo)
+
+# 4.1. Dispara uma solicitação para analisar as metricas do repositório (13)
+def msg_analysis_metrics_repositorio(canal=channel_to_analysis_metrics, fila=my_fila3, usuario='', repositorio='', status=''):
+    tipo = 'analysis metrics'
     util.enfilera_pedido_msg(canal, fila, usuario, repositorio, status, tipo)
 
 channel_to_update_db.basic_consume(my_fila1, update_db_callback, auto_ack=True)

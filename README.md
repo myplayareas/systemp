@@ -62,6 +62,8 @@ fila_status_banco - Fila que organiza as solicitações de atualização de stat
 
 fila_analisador - Fila que organiza as solicitações de análises da treemap
 
+fila_analise_metricas - Fila que organiza as solicitações de análises das métricas do repositório
+
 fila_geracao_json - Fila que organiza as solicitações de geração de JSON (treemap/heatmap) de acordo com as métricas passadas
 
 Entre com o usuário guest/guest para visualizar as operações do message broker em tempo real. 
@@ -122,14 +124,20 @@ python3 consumidor_analisa_commits.py
 python3 consumidor_gera_json.py 
 ```
 
-(Server1) - O "agente" (consumidor/produtor) [analisador de repositório para treemap] analisa (consome da fila_analisador ) o repositório e depois dispara (produz msg para fila_geracao_json ) um pedido para gerar o arquivo json correspondente.
+(Server1) - Consumidor da fila_analise_metricas - Faz os cálculos das métricas do repositório e gera arquivos .csv dos resultados.
 ```
 # Shell 6
+python3 consumidor_analisa_metricas.py 
+```
+
+(Server1) - O "agente" (consumidor/produtor) [analisador de repositório para treemap] analisa (consome da fila_analisador ) o repositório e depois dispara (produz msg para fila_geracao_json ) um pedido para gerar o arquivo json correspondente.
+```
+# Shell 7
 python3 consumidor_treemap_analisador.py 
 ```
 (Server1) - O "agente" (consumidor) [gerador de JSON para treemap] recebe (consome da fila_geracao_json ) o pedido e gera o JSON correspondente na pasta do usuário.
 ```
-# Shell 7
+# Shell 8
 python3 consumidor_treemap_gera_json.py
 ```
 ### 3.2 Chamando a aplicação web
