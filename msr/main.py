@@ -10,6 +10,7 @@ from flask import current_app, request, abort
 from msr import utils
 from msr import produtor_clona_repositorio
 import logging
+import pandas as pd
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d/%m/%Y %H:%M:%S', filename='./logs/my_app_main.log', filemode='w')
 
@@ -154,3 +155,60 @@ def visualizar_treemap_repositorio(id, metric):
     return render_template("repository/treemap.html", my_link=link, my_name=name, my_creation_date=creation_date,
                                 my_analysis_date=analysis_date, my_status=status,
                                 my_relative_path_file_name=relative_path)
+
+@app.route("/repository/<int:id>/metrics/<metric>")
+@login_required
+def visualizar_metricas_repositorio(id, metric):
+    repositorio = repositoriesCollection.query_repository_by_id(id)
+    link = repositorio.link
+    name = repositorio.name
+    creation_date = repositorio.creation_date
+    analysis_date = repositorio.analysis_date
+    status = repositorio.analysed
+    relative_path = ''
+    path_file_metric = ''
+
+    if metric == 'complexity': 
+        relative_path = 'repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'cc' + '.csv'
+        path_file_metric = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'cc' + '.csv'
+        my_column = 'files_cc'
+    if metric == 'frequency':
+        relative_path = 'repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'frequency' + '.csv'    
+        path_file_metric = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'frequency' + '.csv'
+        my_column = 'frequency_in_commits'
+    if metric == 'loc_changes':
+        relative_path = 'repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'lines_changes' + '.csv'
+        path_file_metric = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'lines_changes' + '.csv'
+        my_column = 'files_lines_changes'
+
+    df_temp = pd.read_csv(path_file_metric, index_col=0)
+    df_temp = df_temp.sort_values(by=[my_column], ascending=False)
+
+    return render_template("repository/metrics.html", my_link=link, my_name=name, my_creation_date=creation_date,
+                                my_analysis_date=analysis_date, my_status=status,
+                                my_relative_path_file_name=relative_path, tables=[df_temp.to_html(classes='data')], titles=df_temp.columns.values)
+
+@app.route("/repository/<int:id>/commits/<details>")
+@login_required
+def baixar_commits_repositorio(id, details):
+    repositorio = repositoriesCollection.query_repository_by_id(id)
+    link = repositorio.link
+    name = repositorio.name
+    creation_date = repositorio.creation_date
+    analysis_date = repositorio.analysis_date
+    status = repositorio.analysed
+    relative_path = ''
+    path_file_metric = ''
+
+    if details == 'export': 
+        relative_path = 'repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'all_commits' + '.csv'
+        path_file_metric = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'all_commits' + '.csv'
+    if details == 'files':
+        relative_path = 'repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'all_modified_files' + '.csv'    
+        path_file_metric = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'all_modified_files' + '.csv'
+
+    df_temp = pd.read_csv(path_file_metric, index_col=0)
+
+    return render_template("repository/details_commits.html", my_link=link, my_name=name, my_creation_date=creation_date,
+                                my_analysis_date=analysis_date, my_status=status,
+                                my_relative_path_file_name=relative_path, tables=[df_temp.to_html(classes='data')], titles=df_temp.columns.values)
