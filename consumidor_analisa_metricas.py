@@ -103,10 +103,12 @@ def get_df_cc_ao_longo_do_tempo(local_salva_repositorio, nome_repositorio):
 
 def analisar_metricas(local_salva_repositorio, nome_repositorio):
     all_commits = get_all_commits(local_salva_repositorio, nome_repositorio)
+    df_all_commits = get_df_from_all_commits(local_salva_repositorio, nome_repositorio, all_commits)
     df_all_modified_files = get_df_all_modified_files(local_salva_repositorio, nome_repositorio, all_commits)
     df_frequencia_commits = get_df_frequencia_commits(local_salva_repositorio, nome_repositorio)
     df_mlocs = get_df_mlocs(local_salva_repositorio, nome_repositorio)
     df_cc_ao_longo_do_tempo = get_df_cc_ao_longo_do_tempo(local_salva_repositorio, nome_repositorio)
+    print(f'{df_all_commits.info()}')
     print(f'{df_all_modified_files.info()}')
     print(f'{df_frequencia_commits.info()}')
     print(f'{df_mlocs.info()}')

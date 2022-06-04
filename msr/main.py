@@ -212,3 +212,32 @@ def baixar_commits_repositorio(id, details):
     return render_template("repository/details_commits.html", my_link=link, my_name=name, my_creation_date=creation_date,
                                 my_analysis_date=analysis_date, my_status=status,
                                 my_relative_path_file_name=relative_path, tables=[df_temp.to_html(classes='data')], titles=df_temp.columns.values)
+
+@app.route("/repository/<int:id>/reports")
+@login_required
+def show_report_repositorio(id):
+    repositorio = repositoriesCollection.query_repository_by_id(id)
+    link = repositorio.link
+    name = repositorio.name
+    creation_date = repositorio.creation_date
+    analysis_date = repositorio.analysis_date
+    status = repositorio.analysed
+
+    box_plot1 = 'box_plot_frequency_'
+    box_plot2 = 'box_plot_lines_modified_'
+    relative_path = 'repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'reports' + '.csv'
+    path_file_reports = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'arquivos_criticos' + '.csv'
+    path_file_resumo = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'resumo' + '.csv'
+    path_box_plot1 = '/static/repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + box_plot1 + name + '.png'
+    path_box_plot2 = '/static/repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + box_plot2 + name + '.png'
+    path_scatter_plot = '/static/repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '.png'
+
+    df_temp = pd.read_csv(path_file_reports, index_col=0)
+    df_temp2 = pd.read_csv(path_file_resumo, index_col=0)
+
+    return render_template("repository/reports.html", my_link=link, my_name=name, my_creation_date=creation_date,
+                                my_analysis_date=analysis_date, my_status=status,
+                                my_relative_path_file_name=relative_path, 
+                                my_path_box_plot1=path_box_plot1, my_path_box_plot2=path_box_plot2, my_path_scatter_plot=path_scatter_plot,
+                                tables=[df_temp.to_html(classes='data')], titles=df_temp.columns.values,
+                                tables2=[df_temp2.to_html(classes='data')], titles2=df_temp2.columns.values)
