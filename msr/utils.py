@@ -217,6 +217,16 @@ def get_dataframe_from_all_commits(dict_commits):
     return df
 
 ## Exportar dados da análise para arquivo .csv
+def create_csv_from_df(path, nome_repositorio, nome_df, df):    
+    try:
+        filename = nome_repositorio + '_' + nome_df + '.csv'
+        df.to_csv(path + '/' + filename)
+        print(f'Arquivo {filename} gerado com sucesso!')
+    except Exception as ex:
+        print(f'Erro get_dataframe_all_commits: {str(ex)}')
+    return filename
+
+## Exportar dados da análise para arquivo .csv
 def create_csv_from_all_commits(path, nome_repositorio, df):    
     try:
         filename = nome_repositorio + '_' + 'all_commits' + '.csv'
