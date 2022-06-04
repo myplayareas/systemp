@@ -54,17 +54,19 @@ Quando a aplicação do Server1 for executada, serão criadas as seguintes filas
 
 fila_repositorio_local - Fila que organiza as solicitações para clonar os repositórios
 
+fila_status_banco - Fila que organiza as solicitações de atualização de status de cada repositório no banco
+
 fila_analise_commits - Fila que organiza as solicitações de análise dos repositórios
 
 fila_operacoes_arquivo_local - Fila que organiza a geração de arquivos JSON contendo os resultados das análises de cada repositório
 
-fila_status_banco - Fila que organiza as solicitações de atualização de status de cada repositório no banco
-
-fila_analisador - Fila que organiza as solicitações de análises da treemap
+fila_geracao_json - Fila que organiza as solicitações de geração de JSON (treemap/heatmap) de acordo com as métricas passadas
 
 fila_analise_metricas - Fila que organiza as solicitações de análises das métricas do repositório
 
-fila_geracao_json - Fila que organiza as solicitações de geração de JSON (treemap/heatmap) de acordo com as métricas passadas
+fila_analisador - Fila que organiza as solicitações de análises da treemap
+
+fila_scatter_plot - Fila que organiza as solicitações das métricas especiais para gerar os scatter plots dos arquivos mais "críticos"
 
 Entre com o usuário guest/guest para visualizar as operações do message broker em tempo real. 
 
@@ -130,16 +132,18 @@ python3 consumidor_gera_json.py
 python3 consumidor_analisa_metricas.py 
 ```
 
-(Server1) - O "agente" (consumidor/produtor) [analisador de repositório para treemap] analisa (consome da fila_analisador ) o repositório e depois dispara (produz msg para fila_geracao_json ) um pedido para gerar o arquivo json correspondente.
+(Server1) - Consumidor da fila_scatter_plot - Faz os cálculos das métricas especiais do repositório e gera as imagens de boxplot e scatter plot dos arquivos "críticos"
 ```
 # Shell 7
-python3 consumidor_treemap_analisador.py 
+python3 consumidor_scatter_plot.py 
 ```
-(Server1) - O "agente" (consumidor) [gerador de JSON para treemap] recebe (consome da fila_geracao_json ) o pedido e gera o JSON correspondente na pasta do usuário.
+
+(Server1) - O "agente" (consumidor) [analisador de repositório para treemap] analisa (consome da fila_analisador ) o repositório e os arquivos json correspondentes.
 ```
 # Shell 8
-python3 consumidor_treemap_gera_json.py
+python3 consumidor_treemap_analisador.py 
 ```
+
 ### 3.2 Chamando a aplicação web
 
 http://localhost:5000
