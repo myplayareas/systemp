@@ -15,6 +15,7 @@
                 <th scope="col">Status</th>
                 <th scope="col">Commits</th>
                 <th scope="col">Metrics</th>
+                <th scope="col">Critical</th>
                 <th scope="col">Treemap</th>
                 <th scope="col">Options</th>
             </tr>
@@ -42,7 +43,10 @@
                       <a href="{{ url_for('visualizar_metricas_repositorio', id=repository.id, metric='complexity')}}">CC</a> | 
                       <a href="{{ url_for('visualizar_metricas_repositorio', id=repository.id, metric='frequency')}}"> FC </a>| 
                       <a href="{{ url_for('visualizar_metricas_repositorio', id=repository.id, metric='loc_changes')}}"> MLOC </a>|
-                      <a href="{{ url_for('visualizar_metricas_repositorio', id=repository.id, metric='loc_changes')}}"> Composition </a>                          
+                      <a href="{{ url_for('visualizar_metricas_repositorio', id=repository.id, metric='composition')}}"> Composition </a>                          
+                    </td>
+                    <td>
+                      <a href="{{ url_for('show_report_repositorio', id=repository.id)}}">Report</a> 
                     </td>
                     {% else %}
                     <td>Not Available Yet</td>
