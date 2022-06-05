@@ -20,7 +20,7 @@ Resultado da Análise do Repositório
           <td> {{ my_analysis_date.strftime('%d-%m-%Y %H:%M:%S') }} </td>
           <td >{{ status_repositorio(my_status) }} </td>
     </table>
-  
+    <a href="{{ url_for('download_file_details', id=my_id) }}">Download</a>
     <div class="root"></div>
   
     <script type="text/javascript" src="{{ url_for('static', filename='jsonview.bundle.js') }}"></script>
