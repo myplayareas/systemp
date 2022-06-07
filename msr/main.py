@@ -186,10 +186,10 @@ def visualizar_metricas_repositorio(id, metric):
         my_column = 'files_lines_changes'
         metrics_filename = name + '_files_' + 'lines_changes' + '.csv'
     if metric == 'composition':
-        relative_path = 'repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'metrics_composition' + '.csv'
-        path_file_metric = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'metrics_composition' + '.csv'
+        relative_path = 'repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'composition' + '.csv'
+        path_file_metric = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_files_' + 'composition' + '.csv'
         my_column = 'composition'
-        metrics_filename = name + '_files_' + 'metrics_composition' + '.csv'
+        metrics_filename = name + '_files_' + 'composition' + '.csv'
 
     df_temp = pd.read_csv(path_file_metric, index_col=0)
     df_temp = df_temp.sort_values(by=[my_column], ascending=False)
@@ -248,7 +248,7 @@ def show_report_repositorio(id):
     path_box_plot2 = '/static/repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + box_plot2 + name + '.png'
     path_scatter_plot = '/static/repositories' + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '.png'
     path_file_quadrants_fc_lm = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'quadrants_fc_lm' + '.csv'
-    path_file_java_30_critical = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'java_30_critical' + '.csv'
+    path_file_java_20_critical = utils.Constants.PATH_REPOSITORIES + '/' + str(current_user.get_id()) + '/' + name + '/' + name + '_' + 'java_20_critical' + '.csv'
 
     df_temp = pd.read_csv(path_file_reports, index_col=0)
     df_temp2 = pd.read_csv(path_file_resumo, index_col=0)
@@ -258,7 +258,14 @@ def show_report_repositorio(id):
     df_temp_no_test = df_temp[~df_temp['File'].str.contains('Test')]
 
     df_temp3 = pd.read_csv(path_file_quadrants_fc_lm, index_col=0)
-    df_temp4 = pd.read_csv(path_file_java_30_critical, index_col=0)
+
+    #Todo: extrair para um metodo separado
+    df_results_Java = df_temp[df_temp['File'].str.contains('.java')]
+    df_results_Java_no_Test = df_results_Java[~df_results_Java['File'].str.contains('Test')]
+    df_top_20_critical = df_results_Java_no_Test.head(20)
+    df_top_20_critical.to_csv(path_file_java_20_critical)
+
+    df_temp4 = pd.read_csv(path_file_java_20_critical, index_col=0)
 
     return render_template("repository/reports.html", my_link=link, my_name=name, my_creation_date=creation_date,
                                 my_analysis_date=analysis_date, my_status=status,
