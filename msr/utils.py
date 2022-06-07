@@ -223,7 +223,7 @@ def create_csv_from_df(path, nome_repositorio, nome_df, df):
         df.to_csv(path + '/' + filename)
         print(f'Arquivo {filename} gerado com sucesso!')
     except Exception as ex:
-        print(f'Erro get_dataframe_all_commits: {str(ex)}')
+        print(f'Erro create_csv_from_df: {str(ex)}')
     return filename
 
 ## Exportar dados da análise para arquivo .csv
@@ -233,7 +233,7 @@ def create_csv_from_all_commits(path, nome_repositorio, df):
         df.to_csv(path + '/' + filename)
         print(f'Arquivo {filename} gerado com sucesso!')
     except Exception as ex:
-        print(f'Erro get_dataframe_all_commits: {str(ex)}')
+        print(f'Erro create_csv_from_all_commits: {str(ex)}')
     return filename
 
 def create_dict_from_all_modified_files_from_all_commits(all_commits):

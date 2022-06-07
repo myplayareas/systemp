@@ -18,6 +18,20 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 #nome_repositorio1 = "promocityteste"
 #url_repositorio1 = "https://github.com/myplayareas/promocityteste.git"
 
+repositoriesCollection = Repositories()
+rabbitmq_broker_host = 'localhost'
+my_fila1 = 'fila_sccatter_plot'
+my_fila3 = 'fila_analise_metricas'
+
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host, heartbeat=0))
+
+channel_to_scatter_plot = connection.channel()
+channel_to_scatter_plot.queue_declare(queue=my_fila1, durable=True)
+
+channel_to_analysis_metrics = connection.channel()
+channel_to_analysis_metrics.queue_declare(queue=my_fila3, durable=True)
+
+
 def clona_repositorio_local(user_id, url_repositorio1, nome_repositorio1):
     temp_user_directory = analysis.temp_user_directory(user_id, 'sp') 
     print(f'Clona o repositorio {nome_repositorio1} detro do diretorio {temp_user_directory}')
@@ -36,7 +50,7 @@ def prepare_files_and_directories(user_id, nome_repositorio1):
     # Lista todos os commits de um repositorio
     return list_of_files_and_directories, list_of_files_and_directories_src, list_locs_of_files_updated
 
-def performing_scatter_plot(path_to_save_clone, nome_repositorio1, path_repository_user=None):
+def performing_scatter_plot(path_to_save_clone, nome_repositorio1, path_repository_user):
     list_commits_promocity = miner.list_all_commits(path_to_save_clone)
     # Lista todos os arquivos modificados em cada commit
     dict_modified_files_promocity = miner.list_all_modified_files_in_commits(path_to_save_clone)
@@ -74,12 +88,17 @@ def performing_scatter_plot(path_to_save_clone, nome_repositorio1, path_reposito
         lm_q1, lm_q2, lm_q3, lm_q4 = analysis.get_quartiles_lines_modified(df_boxplot_lm)
         print(f'Quartis da Linhas Modificadas Q1: {lm_q1}, Q2: {lm_q2}, Q3: {lm_q3}, Q4: {lm_q4}')
 
+        # Gera o arquivo .csv dos quartils
+        path_file_quadrants_fc_lm = path_repository_user + '/' + nome_repositorio1 + '_' + 'quadrants_fc_lm' + '.csv'
+        dict_quadrants = {'qfc_q1':fc_q1[0], 'qfc_q2':fc_q2[0], 'qfc_q3':fc_q3[0], 'qfc_q4':fc_q4[0], 'qlm_q1':lm_q1[0], 'qlm_q2':lm_q2[0], 'qlm_q3':lm_q3[0], 'qlm_q4':lm_q4[0]}
+        df_quadrants = pd.DataFrame([dict_quadrants])
+        df_quadrants.to_csv(path_file_quadrants_fc_lm)
+        
         # Lista os arquivos com maior frequência de commits e mais linhas modificadas ao longo do tempo
         my_query = f"Frequency >= {fc_q3[0]} and lines_modified >= {lm_q3[0]}"
         print(my_query)
         df_arquivos_criticos = df_fc_ml.query(my_query)
-        if path_repository_user is not None:
-            util.create_csv_from_df(path_repository_user, nome_repositorio1, 'arquivos_criticos', df_arquivos_criticos)
+        util.create_csv_from_df(path_repository_user, nome_repositorio1, 'arquivos_criticos', df_arquivos_criticos)
         print(f'Arquivos críticos: {df_arquivos_criticos}')
 
         qtd_arquivos_criticos = df_arquivos_criticos.shape[0]
@@ -110,15 +129,6 @@ def performing_scatter_plot(path_to_save_clone, nome_repositorio1, path_reposito
         print('Repositorio não é projeto java!')
         return False
 
-repositoriesCollection = Repositories()
-rabbitmq_broker_host = 'localhost'
-my_fila1 = 'fila_sccatter_plot'
-
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_broker_host, heartbeat=0))
-
-channel_to_scatter_plot = connection.channel()
-channel_to_scatter_plot.queue_declare(queue=my_fila1, durable=True)
-
 def gerar_scatter_plot(user, repositorio, nome_repositorio):
     try:
         status = 'Scatter plot gerado'
@@ -141,9 +151,15 @@ def generate_scatter_plot_callback(ch, method, properties, body):
             user, repositorio, nome_repositorio, status = util.parser_body(body)
             path_repositorio = util.Constants.PATH_REPOSITORIES + '/' + user + '/' + nome_repositorio
             gerar_scatter_plot(user, repositorio, nome_repositorio)
+            msg_analysis_metrics_repositorio(canal=channel_to_analysis_metrics, fila=my_fila3, usuario=user, repositorio=repositorio, status='Analisando Métricas')
         except Exception as ex:
             print(f'Erro: {str(ex)}')     
             logging.error("Exception occurred", exc_info=True)
+
+# 4.1. Dispara uma solicitação para analisar as metricas do repositório (13)
+def msg_analysis_metrics_repositorio(canal=channel_to_analysis_metrics, fila=my_fila3, usuario='', repositorio='', status=''):
+    tipo = 'analysis metrics'
+    util.enfilera_pedido_msg(canal, fila, usuario, repositorio, status, tipo)
  
 channel_to_scatter_plot.basic_consume(my_fila1, generate_scatter_plot_callback, auto_ack=True)
  
