@@ -258,7 +258,6 @@ def show_report_repositorio(id):
     df_temp_no_test = df_temp[~df_temp['File'].str.contains('Test')]
 
     df_temp3 = pd.read_csv(path_file_quadrants_fc_lm, index_col=0)
-
     #Todo: extrair para um metodo separado
     df_results_Java = df_temp[df_temp['File'].str.contains('.java')]
     df_results_Java_no_Test = df_results_Java[~df_results_Java['File'].str.contains('Test')]
