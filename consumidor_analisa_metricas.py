@@ -4,6 +4,7 @@ import pika
 import msr.utils as util
 import logging
 import msr.miner as miner
+import pandas as pd
 
 # Remove all handlers associated with the root logger object.
 for handler in logging.root.handlers[:]:
@@ -101,6 +102,24 @@ def get_df_cc_ao_longo_do_tempo(local_salva_repositorio, nome_repositorio):
         print(f'Erro: cc_ao_longo_do_tempo {str(ex)}')
     return df_cc
 
+def get_df_composition(local_salva_repositorio, nome_repositorio, df_files_cc, df_files_frequency, df_files_lines_changes):
+    try:
+        print('\n Composition')
+        # 10. Composicao das 3 metricas anteriores
+        df_files_metrics_composition = pd.concat([df_files_cc, df_files_frequency, df_files_lines_changes], axis=1)
+        df_files_metrics_composition = df_files_metrics_composition[['file', 'files_cc', 'frequency_in_commits', 'files_lines_changes']]
+        df_files_metrics_composition = df_files_metrics_composition.drop(df_files_metrics_composition.columns[[1]], axis=1)
+        df_files_metrics_composition['file'] = df_files_cc['file'] 
+        df_files_metrics_composition['composition'] = df_files_metrics_composition['files_cc'] * df_files_metrics_composition['frequency_in_commits'] * df_files_metrics_composition['files_lines_changes']
+        df_files_metrics_composition['ccxfc'] = df_files_metrics_composition['files_cc'] * df_files_metrics_composition['frequency_in_commits']
+        df_files_metrics_composition['fcxflc'] = df_files_metrics_composition['frequency_in_commits'] * df_files_metrics_composition['files_lines_changes']
+        df_files_metrics_composition = df_files_metrics_composition[['file', 'files_cc', 'frequency_in_commits', 'files_lines_changes', 'ccxfc', 'fcxflc', 'composition']]
+        filename_fcomposition = util.create_csv_from_files_metric(local_salva_repositorio, nome_repositorio, df_files_metrics_composition, metric='files_composition')
+        print(f'Arquivo: {filename_fcomposition}')
+    except Exception as ex:
+        print(f'Erro mlocs: {str(ex)}')
+    return df_files_metrics_composition
+
 def analisar_metricas(local_salva_repositorio, nome_repositorio):
     all_commits = get_all_commits(local_salva_repositorio, nome_repositorio)
     df_all_commits = get_df_from_all_commits(local_salva_repositorio, nome_repositorio, all_commits)
@@ -108,11 +127,13 @@ def analisar_metricas(local_salva_repositorio, nome_repositorio):
     df_frequencia_commits = get_df_frequencia_commits(local_salva_repositorio, nome_repositorio)
     df_mlocs = get_df_mlocs(local_salva_repositorio, nome_repositorio)
     df_cc_ao_longo_do_tempo = get_df_cc_ao_longo_do_tempo(local_salva_repositorio, nome_repositorio)
+    df_composition = get_df_composition(local_salva_repositorio, nome_repositorio, df_cc_ao_longo_do_tempo, df_frequencia_commits, df_mlocs)
     print(f'{df_all_commits.info()}')
     print(f'{df_all_modified_files.info()}')
     print(f'{df_frequencia_commits.info()}')
     print(f'{df_mlocs.info()}')
     print(f'{df_cc_ao_longo_do_tempo.info()}')
+    print(f'{df_composition.info()}')
 
 def analise_callback(ch, method, properties, body):
     body = body.decode('utf-8')
